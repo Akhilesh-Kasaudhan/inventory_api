@@ -3,13 +3,21 @@ import {
   getAllMedicines,
   addMedicine,
   getMedicineById,
-  masterRoute,
+  addMedicineType,
+  getAllMedicineType,
+  updateMedicineType,
+  deleteMedicineType,
 } from "../controllers/medicine.controller.js";
 const router = express.Router();
 
-router.post("/master", masterRoute);
+router.get("/get-medicineType", getAllMedicineType);
+
 router.post("/add", addMedicine);
 router.get("/", getAllMedicines);
 router.get("/:id", getMedicineById);
+router.post("/add-medicineType", addMedicineType);
+
+router.patch("/update-medicineType/:id", updateMedicineType);
+router.delete("/delete-medicineType/:id", deleteMedicineType);
 
 export default router;
