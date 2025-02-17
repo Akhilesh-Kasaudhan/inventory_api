@@ -3,6 +3,7 @@ import Brand from "../models/masterBrand.modal.js";
 import mongoose from "mongoose";
 
 export const addBrandName = asyncHandler(async (req, res) => {
+  console.log(req.body);
   const { brandName } = req.body;
   if (!brandName) {
     return res.status(400).json({ message: "Please fill in all fields" });
@@ -21,7 +22,7 @@ export const addBrandName = asyncHandler(async (req, res) => {
 export const getBrandName = asyncHandler(async (req, res) => {
   try {
     const brandName = await Brand.find().sort({ createdAt: -1 });
-    return res.status(200).json({ brandName });
+    return res.status(200).json({ brandName: brandName });
   } catch (error) {
     console.log("Error getting all brandName:", error.message);
     return res.status(500).json({ message: "Failed to get all brandName" });
@@ -34,7 +35,7 @@ export const updateBrandName = asyncHandler(async (req, res) => {
   try {
     const updatedBrandName = await Brand.findOneAndUpdate(
       { _id: new mongoose.Types.ObjectId(id) }, // Find by id and type
-      { newBrand }, // Update the type with the new value
+      { brandName: newBrand }, // Update the type with the new value
       { new: true } // Return the updated document
     );
 
