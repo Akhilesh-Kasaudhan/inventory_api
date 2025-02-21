@@ -10,7 +10,11 @@ const medicineSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    price: {
+    type: {
+      type: String,
+      required: true,
+    },
+    quantity: {
       type: Number,
       required: true,
     },
@@ -18,15 +22,12 @@ const medicineSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-    stock: {
+    price: {
       type: Number,
       required: true,
     },
-    description: {
-      type: String,
-    },
-    type: {
-      type: String,
+    mrp: {
+      type: Number,
       required: true,
     },
   },

@@ -3,7 +3,6 @@ import Brand from "../models/masterBrand.modal.js";
 import mongoose from "mongoose";
 
 export const addBrandName = asyncHandler(async (req, res) => {
-  console.log(req.body);
   const { brandName } = req.body;
   if (!brandName) {
     return res.status(400).json({ message: "Please fill in all fields" });
