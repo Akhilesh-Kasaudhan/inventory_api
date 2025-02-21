@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Mongoose } from "mongoose";
 
 const medicineSchema = new mongoose.Schema(
   {
@@ -7,11 +7,13 @@ const medicineSchema = new mongoose.Schema(
       required: true,
     },
     brand: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Brand",
       required: true,
     },
     type: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Master",
       required: true,
     },
     quantity: {

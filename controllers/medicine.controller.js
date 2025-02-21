@@ -2,6 +2,7 @@ import asyncHandler from "express-async-handler";
 import Medicine from "../models/medicine.model.js";
 import Master from "../models/masterMedicine.model.js";
 import mongoose from "mongoose";
+import Brand from "../models/masterBrand.modal.js";
 
 export const addMedicineType = asyncHandler(async (req, res) => {
   console.log("Incoming Request Body:", req.body); // ✅ Debugging step
@@ -75,44 +76,71 @@ export const deleteMedicineType = asyncHandler(async (req, res) => {
 
 export const addMedicine = asyncHandler(async (req, res) => {
   try {
-    const { name, brand, price, expiryDate, stock, description, type } =
-      req.body;
+    const { name, brand, type, quantity, expiryDate, price, mrp } = req.body;
+    const brandExist = await Brand.findOne({ brandName: brand });
+    if (!brandExist) {
+      return res.status(404).json({ mesage: "Brand not found" });
+    }
+    const typeExist = await Master.findOne({ medicineType: type });
+    if (!typeExist) {
+      return res.status(404).json({ mesage: "Type not found" });
+    }
     const medicine = new Medicine({
       name,
-      brand,
-      price,
+      brand: brandExist._id,
+      type: typeExist._id,
+      quantity,
       expiryDate,
-      stock,
-      description,
-      type,
+      price,
+      mrp,
     });
-    const savedMedicine = await medicine.save();
-    res
-      .status(201)
-      .json({ message: "Medicine added successfully", savedMedicine });
+    await medicine.save();
+    return res.status(201).json(medicine);
   } catch (error) {
     console.log("Error adding product:", error.message);
     res.status(400).json({ message: error.message });
   }
 });
 
-export const getAllMedicines = asyncHandler(async (req, res) => {
+export const getMedicines = asyncHandler(async (req, res) => {
   try {
-    const medicines = await Medicine.find();
-    res.status(200).json(medicines);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+    const medicines = await Medicine.aggregate([
+      {
+        $lookup: {
+          from: "brands",
+          localField: "brand",
+          foreignField: "_id",
+          as: "brandDetails",
+        },
+      },
+      { $unwind: "$brandDetails" },
+      {
+        $lookup: {
+          from: "masters",
+          localField: "type",
+          foreignField: "_id",
+          as: "typeDetails",
+        },
+      },
+      { $unwind: "$typeDetails" },
+      {
+        $project: {
+          name: 1,
+          brand: "$brandDetails.brandName",
+          type: "$typeDetails.medicineType",
+          quantity: 1,
+          expiryDate: 1,
+          price: 1,
+          mrp: 1,
+        },
+      },
+    ]);
 
-export const getMedicineById = asyncHandler(async (req, res) => {
-  try {
-    const medicine = await Medicine.findById(req.params.id);
-    if (!medicine) {
-      res.status(404).json({ message: "Medicine not found" });
-    }
-    res.status(200).json(medicine);
+    return res
+      .status(200)
+      .json({ message: "Medicine fetched successfully:", medicines });
   } catch (error) {
+    console.log("Error fetching medicines:", error.message);
     res.status(500).json({ error: error.message });
   }
 });

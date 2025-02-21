@@ -1,8 +1,7 @@
 import express from "express";
 import {
-  getAllMedicines,
+  getMedicines,
   addMedicine,
-  getMedicineById,
   addMedicineType,
   getAllMedicineType,
   updateMedicineType,
@@ -12,9 +11,8 @@ const router = express.Router();
 
 router.get("/get-medicineType", getAllMedicineType);
 
-router.post("/add", addMedicine);
-router.get("/", getAllMedicines);
-router.get("/:id", getMedicineById);
+router.post("/add-medicine", addMedicine);
+router.get("/get-medicine", getMedicines);
 router.post("/add-medicineType", addMedicineType);
 
 router.patch("/update-medicineType/:id", updateMedicineType);
