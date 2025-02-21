@@ -142,3 +142,56 @@ export const getMedicines = asyncHandler(async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+export const updateMedicine = asyncHandler(async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, brand, type, quantity, expiryDate, price, mrp } = req.body;
+
+    // Find the existing medicine
+    const medicine = await Medicine.findById(id);
+    if (!medicine) {
+      return res.status(404).json({ message: "Medicine not found" });
+    }
+
+    // If brand is updated, check if it exists
+    let brandId = medicine.brand; // Default to existing brand
+    if (brand) {
+      const brandExist = await Brand.findOne({ brandName: brand });
+      if (!brandExist) {
+        return res.status(404).json({ message: "Brand not found" });
+      }
+      brandId = brandExist._id;
+    }
+
+    // If type is updated, check if it exists
+    let typeId = medicine.type; // Default to existing type
+    if (type) {
+      const typeExist = await Master.findOne({ medicineType: type });
+      if (!typeExist) {
+        return res.status(404).json({ message: "Type not found" });
+      }
+      typeId = typeExist._id;
+    }
+
+    // Update medicine details
+    medicine.name = name || medicine.name;
+    medicine.brand = brandId;
+    medicine.type = typeId;
+    medicine.quantity = quantity || medicine.quantity;
+    medicine.expiryDate = expiryDate || medicine.expiryDate;
+    medicine.price = price || medicine.price;
+    medicine.mrp = mrp || medicine.mrp;
+
+    // Save the updated medicine
+    const updatedMedicine = await medicine.save();
+
+    return res.status(200).json({
+      message: "Medicine updated successfully",
+      medicine: updatedMedicine,
+    });
+  } catch (error) {
+    console.log("Error updating medicine:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
