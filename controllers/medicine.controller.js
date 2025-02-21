@@ -5,7 +5,6 @@ import mongoose from "mongoose";
 import Brand from "../models/masterBrand.modal.js";
 
 export const addMedicineType = asyncHandler(async (req, res) => {
-  console.log("Incoming Request Body:", req.body); // ✅ Debugging step
   const { type } = req.body;
   if (!type) {
     return res.status(400).json({ message: "Please fill in all fields" });
@@ -24,7 +23,6 @@ export const addMedicineType = asyncHandler(async (req, res) => {
 export const getAllMedicineType = asyncHandler(async (req, res) => {
   try {
     const medicineTypes = await Master.find().sort({ createdAt: -1 });
-    console.log(medicineTypes);
     return res.status(200).json({ medicineType: { medicineTypes } });
   } catch (error) {
     console.log("Error getting all MedicineType:", error.message);
