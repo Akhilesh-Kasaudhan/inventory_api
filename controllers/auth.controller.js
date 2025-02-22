@@ -113,3 +113,11 @@ export const changePassword = asyncHandler(async (req, res) => {
     return res.status(500).json({ message: "Internal server error" });
   }
 });
+
+export const getAuthStatus = (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  res.json({ user: req.user });
+};
