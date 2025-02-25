@@ -36,12 +36,12 @@ export const updateMedicineType = asyncHandler(async (req, res) => {
   try {
     const updatedMedicineType = await Master.findOneAndUpdate(
       { _id: new mongoose.Types.ObjectId(id) }, // Find by id and type
-      { medicineType: newType }, // Update the type with the new value
-      { new: true } // Return the updated document
+      { type: newType }, // Update the type with the new value
+      { new: true, returnOriginal: false } // Return the updated document
     );
 
     if (updatedMedicineType) {
-      return res.status(200).json(updatedMedicineType);
+      return res.status(200).json({ updatedType: updatedMedicineType });
     } else {
       return res.status(404).json({ message: "No medicine type found" });
     }
