@@ -14,7 +14,22 @@ const PORT = process.env.PORT || 3000;
 const CLIENT_URL = process.env.CLIENT_URL;
 const HOST = "0.0.0.0";
 const corsOptions = {
-  origin: ["http://localhost:3001", "https://ram.webexbytes.com"],
+  origin: function (origin, callback) {
+    // Allow requests from any localhost and your deployed frontend
+    const allowedOrigins = [
+      "https://your-frontend-domain.com", // Add your production frontend
+    ];
+
+    if (!origin || origin.startsWith("http://localhost")) {
+      return callback(null, true); // Allow all localhost ports
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true); // Allow defined external origins
+    }
+
+    return callback(new Error("Not allowed by CORS")); // Block unknown origins
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
