@@ -12,7 +12,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const CLIENT_URL = process.env.CLIENT_URL;
-
+const HOST = "0.0.0.0";
 const corsOptions = {
   origin: "*",
   credentials: true,
@@ -30,7 +30,7 @@ app.use("/api/medicines", medicineRoutes);
 app.use("/api/brands", brandRoutes);
 app.use("/api", saleRoutes);
 
-app.listen(PORT, () => {
-  console.log("server is running on port:", PORT);
+app.listen(PORT, HOST, () => {
+  console.log(`Server is running on http://${HOST}:${PORT}`);
   connectDB();
 });
