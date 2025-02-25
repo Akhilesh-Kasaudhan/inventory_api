@@ -28,12 +28,14 @@ export const signup = asyncHandler(async (req, res) => {
       password: hashedPassword,
     });
     if (user) {
-      generateToken(user._id, res);
+      const token = generateToken(user._id, res);
+      console.log(token);
       const savedUser = await user.save();
       const { _id, username } = savedUser;
       return res.status(201).json({
         message: "User created successfully",
         user: { _id, username },
+        token,
       });
     } else {
       return res.status(400).json({ message: "Failed to create user" });
@@ -57,11 +59,13 @@ export const login = asyncHandler(async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
     if (user) {
-      generateToken(user._id, res);
+      const token = generateToken(user._id, res);
+      console.log(token);
       const { _id, username } = user;
       return res.status(200).json({
         message: "Logged in successfully",
         user: { _id, username },
+        token,
       });
     } else {
       return res.status(400).json({ message: "Failed to login user" });
