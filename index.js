@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import authRoute from "./routes/auth.route.js";
 import medicineRoutes from "./routes/medicine.route.js";
 import brandRoutes from "./routes/brand.route.js";
+import saleRoutes from "./routes/sales.route.js";
 import { connectDB } from "./lib/connection.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -27,6 +28,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoute);
 app.use("/api/medicines", medicineRoutes);
 app.use("/api/brands", brandRoutes);
+app.use("/api", saleRoutes);
 
 app.listen(PORT, () => {
   console.log("server is running on port:", PORT);
