@@ -1,6 +1,5 @@
 import asyncHandler from "express-async-handler";
 import Sale from "../models/sales.model.js";
-import { query } from "express";
 
 export const createSale = asyncHandler(async (req, res) => {
   try {
@@ -166,3 +165,6 @@ export const updateUserPurchase = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+
+
