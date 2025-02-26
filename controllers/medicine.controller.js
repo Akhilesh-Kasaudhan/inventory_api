@@ -31,12 +31,15 @@ export const getAllMedicineType = asyncHandler(async (req, res) => {
 });
 
 export const updateMedicineType = asyncHandler(async (req, res) => {
-  const { newType } = req.body;
+  const { medicineType } = req.body;
   const { id } = req.params;
+  if (!medicineType) {
+    return res.status(400).json({ message: "newType is required" });
+  }
   try {
     const updatedMedicineType = await Master.findOneAndUpdate(
       { _id: new mongoose.Types.ObjectId(id) }, // Find by id and type
-      { type: newType }, // Update the type with the new value
+      { medicineType }, // Update the type with the new value
       { new: true, returnOriginal: false } // Return the updated document
     );
 

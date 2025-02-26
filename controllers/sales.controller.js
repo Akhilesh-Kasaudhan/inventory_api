@@ -44,42 +44,60 @@ export const getSales = asyncHandler(async (req, res) => {
   }
 });
 
-// Get personal purchase details
-export const getUserPurchases = async (req, res) => {
+export const getPurchasesByBuyer = async (req, res) => {
   try {
-    let { buyersName, gstNumber } = req.query; // Get query params
+    const { buyersName, gstNumber } = req.query;
 
     if (!buyersName && !gstNumber) {
       return res.status(400).json({
         success: false,
-        message: "Please provide either buyersName or gstNumber.",
+        message: "Please provide either Buyer's Name or GST Number.",
       });
     }
 
-    // Ensure spaces are correctly handled
-    if (buyersName) {
-      buyersName = buyersName.replace(/\+/g, " "); // Convert "+" to spaces
-    }
-    // if (buyersName) {
-    //   buyersName = decodeURIComponent(buyersName);
-    // }
-
-    // Find sales by buyersName or GST Number
     const query = {};
     if (buyersName) {
-      query.buyersName = { $regex: new RegExp("^" + buyersName + "$", "i") }; // Case-insensitive exact match
+      query.buyersName = { $regex: new RegExp("^" + buyersName + "$", "i") }; // Case-insensitive match
     }
     if (gstNumber) query.gstNumber = gstNumber;
 
-    const purchases = await Sale.find(query);
+    const sales = await Sale.find(query);
 
-    if (purchases.length === 0) {
+    if (!sales.length) {
       return res
         .status(404)
         .json({ success: false, message: "No purchase records found." });
     }
 
-    return res.status(200).json({ success: true, purchases });
+    return res.status(200).json({ success: true, purchases: sales });
+  } catch (error) {
+    console.error("Error fetching sales:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Get personal purchase details
+export const getPurchaseById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Sale ID is required.",
+      });
+    }
+    console.log("Received Sale ID:", id);
+
+    const sale = await Sale.findById(id); // Fetch sale by ID
+
+    if (!sale) {
+      return res.status(404).json({
+        success: false,
+        message: "No purchase record found.",
+      });
+    }
+
+    return res.status(200).json({ success: true, purchases: sale });
   } catch (error) {
     console.log(error.message);
     return res.status(500).json({ success: false, message: error.message });
@@ -165,6 +183,3 @@ export const updateUserPurchase = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
-
-
