@@ -1,13 +1,19 @@
 import asyncHandler from "express-async-handler";
 import Sale from "../models/sales.model.js";
 import Medicine from "../models/medicine.model.js";
-import Master from "../models/masterMedicine.model.js";
-import Brand from "../models/masterBrand.modal.js";
 
 export const createSale = asyncHandler(async (req, res) => {
   try {
-    const { buyersName, gstNumber, buyersAdd, medicines, gstPercentage } =
-      req.body;
+    const {
+      buyersName,
+      gstNumber,
+      state,
+      city,
+      localAdd,
+      pincode,
+      medicines,
+      gstPercentage,
+    } = req.body;
 
     // Fetch medicine details if `medicineType` or `brand` is missing
     for (let i = 0; i < medicines.length; i++) {
@@ -27,6 +33,14 @@ export const createSale = asyncHandler(async (req, res) => {
       }
     }
 
+    // Validate required fields
+    if (!state || !city || !pincode || !localAdd) {
+      return res.status(400).json({
+        success: false,
+        message: "State, city, pincode, and local address are required.",
+      });
+    }
+
     //calculate Totals
     const subTotal = medicines.reduce(
       (acc, item) => acc + item.sellingPrice * item.quantity,
@@ -38,7 +52,13 @@ export const createSale = asyncHandler(async (req, res) => {
     const sale = new Sale({
       buyersName,
       gstNumber: gstNumber || null,
-      buyersAdd,
+      buyersAdd: {
+        state,
+        city,
+        pincode,
+        localAdd,
+      },
+
       medicines,
       gstPercentage,
       subTotal,
@@ -58,7 +78,12 @@ export const createSale = asyncHandler(async (req, res) => {
 
 export const getSales = asyncHandler(async (req, res) => {
   try {
-    const sales = await Sale.find().populate("medicines");
+    const sales = await Sale.find().populate({
+      path: "medicines",
+      select: "name brand medicineType quantity sellingPrice expiryDate",
+    });
+
+    console.log("Sales:", sales);
     return res.status(200).json({ success: true, sales });
   } catch (error) {
     console.error("Error fetching sales:", error);

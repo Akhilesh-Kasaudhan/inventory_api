@@ -137,6 +137,8 @@ export const getMedicines = asyncHandler(async (req, res) => {
       },
     ]);
 
+    console.log("Medicines:", medicines);
+
     return res
       .status(200)
       .json({ message: "Medicine fetched successfully:", medicines });
