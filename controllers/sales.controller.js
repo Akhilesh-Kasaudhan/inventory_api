@@ -1,10 +1,31 @@
 import asyncHandler from "express-async-handler";
 import Sale from "../models/sales.model.js";
+import Medicine from "../models/medicine.model.js";
+import Master from "../models/masterMedicine.model.js";
+import Brand from "../models/masterBrand.modal.js";
 
 export const createSale = asyncHandler(async (req, res) => {
   try {
     const { buyersName, gstNumber, buyersAdd, medicines, gstPercentage } =
       req.body;
+
+    // Fetch medicine details if `medicineType` or `brand` is missing
+    for (let i = 0; i < medicines.length; i++) {
+      let medicine = medicines[i];
+
+      // If `medicineType` is missing, fetch it
+      if (!medicine.medicineType) {
+        const medicineData = await Medicine.findOne({ name: medicine.name });
+        if (!medicineData) {
+          return res.status(400).json({
+            success: false,
+            message: `Medicine '${medicine.name}' not found in database.`,
+          });
+        }
+        medicines[i].medicineType = medicineData.type;
+        medicines[i].brand = medicineData.brand;
+      }
+    }
 
     //calculate Totals
     const subTotal = medicines.reduce(
@@ -37,13 +58,15 @@ export const createSale = asyncHandler(async (req, res) => {
 
 export const getSales = asyncHandler(async (req, res) => {
   try {
-    const sales = await Sale.find();
+    const sales = await Sale.find().populate("medicines");
     return res.status(200).json({ success: true, sales });
   } catch (error) {
+    console.error("Error fetching sales:", error);
     return res.status(500).json({ success: false, message: error.message });
   }
 });
 
+// ✅ Fetch sales by buyer's name or GST number
 export const getPurchasesByBuyer = async (req, res) => {
   try {
     const { buyersName, gstNumber } = req.query;
@@ -61,7 +84,7 @@ export const getPurchasesByBuyer = async (req, res) => {
     }
     if (gstNumber) query.gstNumber = gstNumber;
 
-    const sales = await Sale.find(query);
+    const sales = await Sale.find(query).populate("medicines");
 
     if (!sales.length) {
       return res
@@ -88,7 +111,7 @@ export const getPurchaseById = async (req, res) => {
     }
     console.log("Received Sale ID:", id);
 
-    const sale = await Sale.findById(id); // Fetch sale by ID
+    const sale = await Sale.findById(id).populate("medicines"); // Fetch sale by ID
 
     if (!sale) {
       return res.status(404).json({
