@@ -17,7 +17,7 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests from any localhost and your deployed frontend
     const allowedOrigins = [
-      "https://ram.webexbytes.com/", // Add your production frontend
+      "https://ram.webexbytes.com", // Add your production frontend
     ];
 
     if (!origin || origin.startsWith("http://localhost")) {
