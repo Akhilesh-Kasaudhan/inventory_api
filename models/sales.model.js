@@ -30,7 +30,7 @@ const salesSchema = new mongoose.Schema(
         brand: { type: String, required: true },
         medicineType: { type: String, required: true },
         quantity: { type: Number, required: true },
-        expiryDate: { type: Date, required: true },
+        expiryDate: { type: String, required: true },
         sellingPrice: { type: Number, required: true },
       },
     ],
