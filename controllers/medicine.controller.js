@@ -34,7 +34,7 @@ export const updateMedicineType = asyncHandler(async (req, res) => {
   const { medicineType } = req.body;
   const { id } = req.params;
   if (!medicineType) {
-    return res.status(400).json({ message: "newType is required" });
+    return res.status(400).json({ message: "medicineType is required" });
   }
   try {
     const updatedMedicineType = await Master.findOneAndUpdate(
