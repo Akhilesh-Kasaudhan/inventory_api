@@ -21,7 +21,7 @@ const medicineSchema = new mongoose.Schema(
       required: true,
     },
     expiryDate: {
-      type: Date,
+      type: String,
       required: true,
     },
     price: {

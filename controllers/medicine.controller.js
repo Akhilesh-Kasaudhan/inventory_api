@@ -91,12 +91,15 @@ export const addMedicine = asyncHandler(async (req, res) => {
     if (!typeExist) {
       return res.status(404).json({ mesage: "Type not found" });
     }
+
+    // Ensure expiryDate is stored as Month and Year
+    const formattedExpiryDate = expiryDate.slice(0, 7); // Extract YYYY-MM format
     const medicine = new Medicine({
       name,
       brand: brandExist._id,
       type: typeExist._id,
       quantity,
-      expiryDate,
+      expiryDate: formattedExpiryDate,
       price,
       mrp,
     });
@@ -141,8 +144,6 @@ export const getMedicines = asyncHandler(async (req, res) => {
         },
       },
     ]);
-
-    console.log("Medicines:", medicines);
 
     return res
       .status(200)
