@@ -77,7 +77,6 @@ export const getSales = asyncHandler(async (req, res) => {
   try {
     const sales = await Sale.find().populate("medicines");
 
-    console.log("Sales:", sales);
     return res.status(200).json({ success: true, sales });
   } catch (error) {
     console.error("Error fetching sales:", error);
