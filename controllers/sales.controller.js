@@ -15,18 +15,18 @@ export const createSale = asyncHandler(async (req, res) => {
       gstPercentage,
     } = req.body;
 
-    if (
-      !buyersName ||
-      !buyersPhn ||
-      !buyersAdd ||
-      !medicines.length ||
-      !email
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Buyer's Name, Phone, Address, and Medicines are required.",
-      });
-    }
+    // if (
+    //   !buyersName ||
+    //   !buyersPhn ||
+    //   !buyersAdd ||
+    //   !medicines.length ||
+    //   !email
+    // ) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Buyer's Name, Phone, Address, and Medicines are required.",
+    //   });
+    // }
 
     for (let i = 0; i < medicines.length; i++) {
       let medicine = medicines[i];
