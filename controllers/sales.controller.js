@@ -30,15 +30,21 @@ export const createSale = asyncHandler(async (req, res) => {
 
     for (let i = 0; i < medicines.length; i++) {
       let medicine = medicines[i];
+
+      // Validate required fields
       if (!medicine.medicineType || !medicine.brand || !medicine.expiryDate) {
         const medicineData = await Medicine.findOne({ name: medicine.name });
+
         if (!medicineData) {
           return res.status(400).json({
             success: false,
             message: `Medicine '${medicine.name}' not found in database.`,
           });
         }
+
+        // Validate selling price
         if (
+          !medicine.sellingPrice || // Ensure selling price exists
           medicine.sellingPrice > medicineData.mrp ||
           medicine.sellingPrice < medicineData.price
         ) {
@@ -47,7 +53,13 @@ export const createSale = asyncHandler(async (req, res) => {
             message: `Selling price of '${medicine.name}' must be between purchase price and MRP.`,
           });
         }
-        medicines[i] = { ...medicine, ...medicineData.toObject() };
+
+        // Merge database values into medicine object
+        medicines[i] = {
+          ...medicine,
+          ...medicineData.toObject(),
+          expiryDate: medicine.expiryDate || medicineData.expiryDate, // Ensure expiryDate is set
+        };
       }
     }
 
