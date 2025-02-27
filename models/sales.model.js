@@ -20,9 +20,9 @@ const salesSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    salesDate: {
-      type: Date,
-      default: Date.now,
+    email: {
+      type: String,
+      required: true,
     },
     medicines: [
       {

@@ -10,11 +10,18 @@ export const createSale = asyncHandler(async (req, res) => {
       buyersDL,
       buyersPhn,
       buyersAdd,
+      email,
       medicines,
       gstPercentage,
     } = req.body;
 
-    if (!buyersName || !buyersPhn || !buyersAdd || !medicines.length) {
+    if (
+      !buyersName ||
+      !buyersPhn ||
+      !buyersAdd ||
+      !medicines.length ||
+      !email
+    ) {
       return res.status(400).json({
         success: false,
         message: "Buyer's Name, Phone, Address, and Medicines are required.",
@@ -57,6 +64,7 @@ export const createSale = asyncHandler(async (req, res) => {
       buyersDL: buyersDL || null,
       buyersPhn,
       buyersAdd,
+      email,
       medicines,
       gstPercentage,
       subTotal,
