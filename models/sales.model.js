@@ -9,6 +9,13 @@ const salesSchema = new mongoose.Schema(
     gstNumber: {
       type: String,
     },
+    buyersDL: {
+      type: String,
+    },
+    buyersPhn: {
+      type: Number,
+      required: true,
+    },
     buyersAdd: {
       type: String,
       required: true,
@@ -23,6 +30,7 @@ const salesSchema = new mongoose.Schema(
         brand: { type: String, required: true },
         medicineType: { type: String, required: true },
         quantity: { type: Number, required: true },
+        expiryDate: { type: Date, required: true },
         sellingPrice: { type: Number, required: true },
       },
     ],

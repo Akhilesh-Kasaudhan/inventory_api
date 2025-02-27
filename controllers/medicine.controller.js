@@ -78,6 +78,11 @@ export const deleteMedicineType = asyncHandler(async (req, res) => {
 export const addMedicine = asyncHandler(async (req, res) => {
   try {
     const { name, brand, type, quantity, expiryDate, price, mrp } = req.body;
+    if (price > mrp) {
+      return res
+        .status(400)
+        .json({ message: " Purchasing Price cannot be greater than MRP" });
+    }
     const brandExist = await Brand.findOne({ brandName: brand });
     if (!brandExist) {
       return res.status(404).json({ mesage: "Brand not found" });

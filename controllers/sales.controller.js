@@ -7,20 +7,23 @@ export const createSale = asyncHandler(async (req, res) => {
     const {
       buyersName,
       gstNumber,
-      state,
-      city,
-      localAdd,
-      pincode,
+      buyersDL,
+      buyersPhn,
+      buyersAdd,
       medicines,
       gstPercentage,
     } = req.body;
 
-    // Fetch medicine details if `medicineType` or `brand` is missing
+    if (!buyersName || !buyersPhn || !buyersAdd || !medicines.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Buyer's Name, Phone, Address, and Medicines are required.",
+      });
+    }
+
     for (let i = 0; i < medicines.length; i++) {
       let medicine = medicines[i];
-
-      // If `medicineType` is missing, fetch it
-      if (!medicine.medicineType) {
+      if (!medicine.medicineType || !medicine.brand || !medicine.expiryDate) {
         const medicineData = await Medicine.findOne({ name: medicine.name });
         if (!medicineData) {
           return res.status(400).json({
@@ -28,20 +31,19 @@ export const createSale = asyncHandler(async (req, res) => {
             message: `Medicine '${medicine.name}' not found in database.`,
           });
         }
-        medicines[i].medicineType = medicineData.type;
-        medicines[i].brand = medicineData.brand;
+        if (
+          medicine.sellingPrice > medicineData.mrp ||
+          medicine.sellingPrice < medicineData.price
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: `Selling price of '${medicine.name}' must be between purchase price and MRP.`,
+          });
+        }
+        medicines[i] = { ...medicine, ...medicineData.toObject() };
       }
     }
 
-    // Validate required fields
-    if (!state || !city || !pincode || !localAdd) {
-      return res.status(400).json({
-        success: false,
-        message: "State, city, pincode, and local address are required.",
-      });
-    }
-
-    //calculate Totals
     const subTotal = medicines.reduce(
       (acc, item) => acc + item.sellingPrice * item.quantity,
       0
@@ -52,13 +54,9 @@ export const createSale = asyncHandler(async (req, res) => {
     const sale = new Sale({
       buyersName,
       gstNumber: gstNumber || null,
-      buyersAdd: {
-        state,
-        city,
-        pincode,
-        localAdd,
-      },
-
+      buyersDL: buyersDL || null,
+      buyersPhn,
+      buyersAdd,
       medicines,
       gstPercentage,
       subTotal,
@@ -71,7 +69,6 @@ export const createSale = asyncHandler(async (req, res) => {
       .status(201)
       .json({ success: true, message: "Sale recorded successfully", sale });
   } catch (error) {
-    console.log(error.message);
     return res.status(500).json({ success: false, message: error.message });
   }
 });
