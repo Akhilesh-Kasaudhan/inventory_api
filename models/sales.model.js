@@ -40,7 +40,7 @@ const salesSchema = new mongoose.Schema(
     },
     gstPercentage: {
       type: Number,
-      required: true,
+      default: 0,
     },
     gstTotal: {
       type: Number,
