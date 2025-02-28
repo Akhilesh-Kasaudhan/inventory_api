@@ -7,46 +7,60 @@ import saleRoutes from "./routes/sales.route.js";
 import { connectDB } from "./lib/connection.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
+import rateLimit from "express-rate-limit";
 
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const CLIENT_URL = process.env.CLIENT_URL;
 const HOST = "0.0.0.0";
+// 🔹 Security Middlewares
+app.use(helmet()); // Protects API with security headers
+app.use(cookieParser()); // Parses cookies
+app.use(morgan("dev")); // Logs API requests
+
+// 🔹 Rate Limiting - Prevents too many requests
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per 15 min
+  message: "Too many requests, please try again later.",
+});
+app.use(limiter);
+
+// 🔹 CORS Configuration - Allow Any Localhost Port
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests from any localhost and your deployed frontend
-    const allowedOrigins = [
-      "https://ram.webexbytes.com", // Add your production frontend
-    ];
-
     if (!origin || origin.startsWith("http://localhost")) {
-      return callback(null, true); // Allow all localhost ports
+      callback(null, true); // Allow requests from any localhost port
+    } else {
+      callback(new Error("Not allowed by CORS"));
     }
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true); // Allow defined external origins
-    }
-
-    return callback(new Error("Not allowed by CORS")); // Block unknown origins
   },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true, // Allow cookies & authorization headers
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  allowedHeaders:
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization",
 };
+
 app.use(cors(corsOptions));
 
-app.use(express.json());
-app.use(cookieParser());
+app.use(express.json({ limit: "10mb" })); // Prevents large payload attacks
+
+app.options("*", cors(corsOptions));
+
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRoute);
 app.use("/api/medicines", medicineRoutes);
 app.use("/api/brands", brandRoutes);
 app.use("/api", saleRoutes);
-app.use((req, res, next) => {
-  console.log("Incoming request from:", req.headers.origin);
-  next();
+app.use((err, req, res, next) => {
+  console.error("🔥 Error:", err.message);
+  res
+    .status(err.status || 500)
+    .json({ message: err.message || "Internal Server Error" });
 });
 
 app.listen(PORT, HOST, () => {
