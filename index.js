@@ -14,8 +14,9 @@ import rateLimit from "express-rate-limit";
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
-const CLIENT_URL = process.env.CLIENT_URL;
+const CLIENT_URL = process.env.CLIENT_URL; // Ensure this is set in .env
 const HOST = "0.0.0.0";
+
 // 🔹 Security Middlewares
 app.use(helmet()); // Protects API with security headers
 app.use(cookieParser()); // Parses cookies
@@ -29,33 +30,49 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// 🔹 CORS Configuration - Allow Any Localhost Port
+// 🔹 CORS Configuration - Fixes Strict-Origin-When-Cross-Origin Errors
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  CLIENT_URL, // Production frontend (from .env)
+];
+
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin || origin.startsWith("http://localhost")) {
-      callback(null, true); // Allow requests from any localhost port
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true); // Allow request
     } else {
-      callback(new Error("Not allowed by CORS"));
+      callback(new Error("CORS not allowed for this origin"));
     }
   },
-  credentials: true, // Allow cookies & authorization headers
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  allowedHeaders:
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+  credentials: true, // Allow cookies & authentication headers
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Origin",
+    "X-Requested-With",
+    "Content-Type",
+    "Accept",
+    "Authorization",
+  ],
 };
 
+// Apply CORS Middleware
 app.use(cors(corsOptions));
 
-app.use(express.json({ limit: "10mb" })); // Prevents large payload attacks
-
+// Handle Preflight Requests (OPTIONS)
 app.options("*", cors(corsOptions));
 
+// Middleware for JSON & URL Encoding
+app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+// 🔹 Routes
 app.use("/api/auth", authRoute);
 app.use("/api/medicines", medicineRoutes);
 app.use("/api/brands", brandRoutes);
 app.use("/api", saleRoutes);
+
+// Global Error Handler
 app.use((err, req, res, next) => {
   console.error("🔥 Error:", err.message);
   res
@@ -63,7 +80,8 @@ app.use((err, req, res, next) => {
     .json({ message: err.message || "Internal Server Error" });
 });
 
+// Start Server
 app.listen(PORT, HOST, () => {
-  console.log(`Server is running on http://${HOST}:${PORT}`);
+  console.log(`🚀 Server is running on http://${HOST}:${PORT}`);
   connectDB();
 });
