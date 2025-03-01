@@ -31,32 +31,29 @@ export const createSale = asyncHandler(async (req, res) => {
       });
     }
 
-    let medicineIds = [];
-    let subTotal = 0;
-
-    for (let i = 0; i < medicines.length; i++) {
-      let medicineId = medicines[i];
-
-      if (!mongoose.Types.ObjectId.isValid(medicineId)) {
-        return res.status(400).json({
-          success: false,
-          message: `Invalid medicine ID: ${medicineId}`,
-        });
-      }
-
-      const medicineData = await Medicine.findById(medicineId);
-
-      if (!medicineData) {
-        return res.status(400).json({
-          success: false,
-          message: `Medicine with ID '${medicineId}' not found in database.`,
-        });
-      }
-
-      medicineIds.push(medicineData._id);
-      subTotal += medicineData.price * (medicines[i].quantity || 1);
+    if (!medicines || medicines.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Medicines are required." });
     }
 
+    // Validate and check medicine details
+    const processedMedicines = await Promise.all(
+      medicines.map(async (medicine) => {
+        const medicineData = await Medicine.findById(medicine.medicineId);
+        if (!medicineData) {
+          throw new Error(`Medicine '${medicine.name}' not found.`);
+        }
+        return {
+          ...medicine, // Keep all submitted details
+          medicineId: medicine.medicineId,
+        };
+      })
+    );
+    const subTotal = processedMedicines.reduce(
+      (acc, med) => acc + med.sellingPrice * med.quantity,
+      0
+    );
     const gstTotal = (subTotal * gstPercentage) / 100;
     const grandTotal = subTotal + gstTotal;
 
@@ -67,7 +64,7 @@ export const createSale = asyncHandler(async (req, res) => {
       buyersPhn,
       buyersAdd, // Now an object
       email,
-      medicines: medicineIds,
+      medicines: processedMedicines,
       gstPercentage,
       subTotal,
       gstTotal,
