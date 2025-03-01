@@ -162,8 +162,6 @@ export const updateUserPurchase = asyncHandler(async (req, res) => {
       });
     }
 
-    console.log("newMedicines", newMedicines);
-
     // Validate saleId
     if (!mongoose.Types.ObjectId.isValid(saleId)) {
       return res.status(400).json({
@@ -222,7 +220,6 @@ export const updateUserPurchase = asyncHandler(async (req, res) => {
       // Calculate subtotal
       newSubTotal += medicineData.price * (medicine.quantity || 1);
     }
-    console.log("Updated Medicines:", updatedMedicines);
 
     // Update sale record
     sale.medicines = updatedMedicines; // Update medicines array
