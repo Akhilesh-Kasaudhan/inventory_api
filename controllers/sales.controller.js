@@ -162,6 +162,17 @@ export const updateUserPurchase = asyncHandler(async (req, res) => {
       });
     }
 
+    console.log("newMedicines", newMedicines);
+
+    // Validate saleId
+    if (!mongoose.Types.ObjectId.isValid(saleId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Sale ID.",
+      });
+    }
+
+    // Find the sale record
     let sale = await Sale.findById(saleId);
     if (!sale) {
       return res.status(404).json({
@@ -170,8 +181,8 @@ export const updateUserPurchase = asyncHandler(async (req, res) => {
       });
     }
 
-    // Validate new medicines
-    let medicineIds = [];
+    // Validate new medicines and fetch their details
+    let updatedMedicines = [];
     let newSubTotal = 0;
 
     for (let medicine of newMedicines) {
@@ -193,25 +204,45 @@ export const updateUserPurchase = asyncHandler(async (req, res) => {
         });
       }
 
-      // Add validated medicine ID to the array
-      medicineIds.push(new mongoose.Types.ObjectId(medicine.medicineId));
+      // Construct the medicine object with all required fields
+      const updatedMedicine = {
+        medicineId: new mongoose.Types.ObjectId(medicine.medicineId), // Ensure ObjectId
+        name: medicineData.name,
+        brand: medicineData.brand,
+        medicineType: medicineData.type,
+        quantity: medicine.quantity,
+        expiryDate: medicineData.expiryDate,
+        price: medicineData.price,
+        sellingPrice: medicine.sellingPrice,
+        mrp: medicineData.mrp,
+      };
+
+      updatedMedicines.push(updatedMedicine);
 
       // Calculate subtotal
       newSubTotal += medicineData.price * (medicine.quantity || 1);
     }
+    console.log("Updated Medicines:", updatedMedicines);
 
-    // Validate new medicines
-    sale.medicines = medicineIds;
-    sale.subTotal = newSubTotal;
-    sale.gstTotal = (newSubTotal * sale.gstPercentage) / 100;
-    sale.grandTotal = sale.subTotal + sale.gstTotal;
+    // Update sale record
+    sale.medicines = updatedMedicines; // Update medicines array
+    sale.subTotal = newSubTotal; // Update subtotal
+    sale.gstTotal = (newSubTotal * sale.gstPercentage) / 100; // Update GST total
+    sale.grandTotal = sale.subTotal + sale.gstTotal; // Update grand total
 
+    // Save the updated sale record
     await sale.save();
+
+    // Populate medicines for the response
+    const updatedSale = await Sale.findById(saleId).populate(
+      "medicines.medicineId",
+      "name brand type expiryDate price mrp"
+    );
 
     res.status(200).json({
       success: true,
       message: "Sale updated successfully.",
-      sale,
+      sale: updatedSale,
     });
   } catch (error) {
     res.status(500).json({
