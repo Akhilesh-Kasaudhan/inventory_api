@@ -45,8 +45,15 @@ export const createSale = asyncHandler(async (req, res) => {
           throw new Error(`Medicine '${medicine.name}' not found.`);
         }
         return {
-          ...medicine, // Keep all submitted details
-          medicineId: medicine.medicineId,
+          medicineId: new mongoose.Types.ObjectId(medicine.medicineId), // ✅ Convert string ID to ObjectId
+          name: medicine.name,
+          brand: medicine.brand,
+          medicineType: medicine.medicineType,
+          quantity: medicine.quantity,
+          expiryDate: medicine.expiryDate,
+          price: medicine.price,
+          sellingPrice: medicine.sellingPrice,
+          mrp: medicine.mrp,
         };
       })
     );
@@ -54,7 +61,7 @@ export const createSale = asyncHandler(async (req, res) => {
       (acc, med) => acc + med.sellingPrice * med.quantity,
       0
     );
-    const gstTotal = (subTotal * gstPercentage) / 100;
+    const gstTotal = (subTotal * (gstPercentage || 0)) / 100;
     const grandTotal = subTotal + gstTotal;
 
     const sale = new Sale({

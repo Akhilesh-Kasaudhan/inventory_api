@@ -26,7 +26,19 @@ const salesSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    medicines: [{ type: mongoose.Schema.Types.ObjectId, ref: "Medicine" }],
+    medicines: [
+      {
+        medicineId: { type: mongoose.Schema.Types.ObjectId, ref: "Medicine" }, // Reference to Medicine model
+        name: { type: String, required: true }, // Store medicine name
+        brand: { type: String, required: true }, // Store medicine brand
+        medicineType: { type: String, required: true }, // Store medicine type
+        quantity: { type: Number, required: true }, // Store quantity
+        expiryDate: { type: String, required: true }, // Store expiry date (YYYY-MM format)
+        price: { type: Number, required: true }, // Store price
+        sellingPrice: { type: Number, required: true }, // Store selling price
+        mrp: { type: Number, required: true }, // Store MRP
+      },
+    ],
     subTotal: {
       type: Number,
       required: true,
