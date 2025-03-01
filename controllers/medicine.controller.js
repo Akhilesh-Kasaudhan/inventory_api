@@ -134,6 +134,7 @@ export const getMedicines = asyncHandler(async (req, res) => {
       { $unwind: "$typeDetails" },
       {
         $project: {
+          _id: 1,
           name: 1,
           brand: "$brandDetails.brandName",
           type: "$typeDetails.medicineType",
