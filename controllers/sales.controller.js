@@ -30,39 +30,32 @@ export const createSale = asyncHandler(async (req, res) => {
       });
     }
 
-    // Validate and populate medicine details
+    let medicineIds = [];
+    let subTotal = 0;
+
     for (let i = 0; i < medicines.length; i++) {
-      let medicine = medicines[i];
+      let medicineId = medicines[i];
 
-      if (!medicine.medicineType || !medicine.brand || !medicine.expiryDate) {
-        const medicineData = await Medicine.findOne({ name: medicine.name });
-
-        if (!medicineData) {
-          return res.status(400).json({
-            success: false,
-            message: `Medicine '${medicine.name}' not found in database.`,
-          });
-        }
-
-        if (
-          !medicine.sellingPrice ||
-          medicine.sellingPrice > medicineData.mrp ||
-          medicine.sellingPrice < medicineData.price
-        ) {
-          return res.status(400).json({
-            success: false,
-            message: `Selling price of '${medicine.name}' must be between purchase price and MRP.`,
-          });
-        }
-
-        medicines[i] = medicineData._id;
+      if (!mongoose.Types.ObjectId.isValid(medicineId)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid medicine ID: ${medicineId}`,
+        });
       }
+
+      const medicineData = await Medicine.findById(medicineId);
+
+      if (!medicineData) {
+        return res.status(400).json({
+          success: false,
+          message: `Medicine with ID '${medicineId}' not found in database.`,
+        });
+      }
+
+      medicineIds.push(medicineData._id);
+      subTotal += medicineData.price * (medicines[i].quantity || 1);
     }
 
-    const subTotal = medicines.reduce(
-      (acc, item) => acc + item.sellingPrice * item.quantity,
-      0
-    );
     const gstTotal = (subTotal * gstPercentage) / 100;
     const grandTotal = subTotal + gstTotal;
 
@@ -73,7 +66,7 @@ export const createSale = asyncHandler(async (req, res) => {
       buyersPhn,
       buyersAdd, // Now an object
       email,
-      medicines,
+      medicines: medicineIds,
       gstPercentage,
       subTotal,
       gstTotal,
@@ -92,10 +85,11 @@ export const createSale = asyncHandler(async (req, res) => {
 // Fetch all sales
 export const getSales = asyncHandler(async (req, res) => {
   try {
-    const sales = await Sale.find();
-    return res
-      .status(200)
-      .json({ success: true, Sales: sales, medicine: sales.medicines });
+    const sales = await Sale.find().populate(
+      "medicines",
+      "name ,brand ,type ,quantity ,expiryDate ,price ,mrp"
+    );
+    return res.status(200).json({ success: true, sales });
   } catch (error) {
     console.error("Error fetching sales:", error);
     return res.status(500).json({ success: false, message: error.message });
@@ -112,12 +106,16 @@ export const getPurchasesByBuyer = asyncHandler(async (req, res) => {
     const query = {};
     if (buyersName) query.buyersName = new RegExp(`^${buyersName}$`, "i");
     if (gstNumber) query.gstNumber = gstNumber;
-    const sales = await Sale.find(query).populate("medicines");
+    const sales = await Sale.find(query).populate(
+      "medicines",
+      "name brand type quantity expiryDate price mrp"
+    );
     if (!sales.length)
       return res
         .status(404)
         .json({ success: false, message: "No purchase records found." });
-    res.status(200).json({ success: true, purchases: sales });
+
+    return res.status(200).json({ success: true, purchases: sales });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -125,16 +123,17 @@ export const getPurchasesByBuyer = asyncHandler(async (req, res) => {
 
 export const getPurchaseById = asyncHandler(async (req, res) => {
   try {
-    const sale = await Sale.findById(req.params.id).populate("medicines");
+    const sale = await Sale.findById(req.params.id).populate(
+      "medicines",
+      "name brand type quantity expiryDate price mrp"
+    );
     if (!sale)
       return res.status(404).json({
         success: false,
         message: "No purchase record found.",
       });
 
-    res
-      .status(200)
-      .json({ success: true, purchases: sale, medicine: sale.medicines });
+    res.status(200).json({ success: true, purchases: sale });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -167,27 +166,34 @@ export const updateUserPurchase = asyncHandler(async (req, res) => {
     }
 
     // Validate new medicines
-    for (let medicine of newMedicines) {
-      const medicineData = await Medicine.findOne({ name: medicine.name });
+    let medicineIds = [];
+    let newSubTotal = 0;
+
+    for (let medicineId of newMedicines) {
+      if (!mongoose.Types.ObjectId.isValid(medicineId)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid medicine ID: ${medicineId}`,
+        });
+      }
+
+      const medicineData = await Medicine.findById(medicineId);
+
       if (!medicineData) {
         return res.status(400).json({
           success: false,
-          message: `Medicine '${medicine.name}' not found.`,
+          message: `Medicine with ID '${medicineId}' not found.`,
         });
       }
-      medicine.medicineType = medicineData.type;
-      medicine.brand = medicineData.brand;
+
+      medicineIds.push(medicineData._id);
+      newSubTotal += medicineData.price * (medicineData.quantity || 1);
     }
 
-    // Replace existing medicines with new medicines
-    sale.medicines = newMedicines;
-
-    // Recalculate totals
-    sale.subTotal = newMedicines.reduce(
-      (acc, item) => acc + item.sellingPrice * item.quantity,
-      0
-    );
-    sale.gstTotal = (sale.subTotal * sale.gstPercentage) / 100;
+    // Validate new medicines
+    sale.medicines = medicineIds;
+    sale.subTotal = newSubTotal;
+    sale.gstTotal = (newSubTotal * sale.gstPercentage) / 100;
     sale.grandTotal = sale.subTotal + sale.gstTotal;
 
     await sale.save();
