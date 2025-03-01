@@ -9,29 +9,31 @@ export const createSale = asyncHandler(async (req, res) => {
       gstNumber,
       buyersDL,
       buyersPhn,
-      buyersAdd,
+      buyersAdd, // { pincode, city, state, localAdd }
       email,
       medicines,
       gstPercentage,
     } = req.body;
 
-    // if (
-    //   !buyersName ||
-    //   !buyersPhn ||
-    //   !buyersAdd ||
-    //   !medicines.length ||
-    //   !email
-    // ) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "Buyer's Name, Phone, Address, and Medicines are required.",
-    //   });
-    // }
+    // Validate required address fields
+    if (
+      !buyersAdd ||
+      !buyersAdd.pincode ||
+      !buyersAdd.city ||
+      !buyersAdd.state ||
+      !buyersAdd.localAdd
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Buyer's full address (pincode, city, state, localAdd) is required.",
+      });
+    }
 
+    // Validate and populate medicine details
     for (let i = 0; i < medicines.length; i++) {
       let medicine = medicines[i];
 
-      // Validate required fields
       if (!medicine.medicineType || !medicine.brand || !medicine.expiryDate) {
         const medicineData = await Medicine.findOne({ name: medicine.name });
 
@@ -42,9 +44,8 @@ export const createSale = asyncHandler(async (req, res) => {
           });
         }
 
-        // Validate selling price
         if (
-          !medicine.sellingPrice || // Ensure selling price exists
+          !medicine.sellingPrice ||
           medicine.sellingPrice > medicineData.mrp ||
           medicine.sellingPrice < medicineData.price
         ) {
@@ -54,11 +55,10 @@ export const createSale = asyncHandler(async (req, res) => {
           });
         }
 
-        // Merge database values into medicine object
         medicines[i] = {
           ...medicine,
           ...medicineData.toObject(),
-          expiryDate: medicine.expiryDate || medicineData.expiryDate, // Ensure expiryDate is set
+          expiryDate: medicine.expiryDate || medicineData.expiryDate,
         };
       }
     }
@@ -75,7 +75,7 @@ export const createSale = asyncHandler(async (req, res) => {
       gstNumber: gstNumber || null,
       buyersDL: buyersDL || null,
       buyersPhn,
-      buyersAdd,
+      buyersAdd, // Now an object
       email,
       medicines,
       gstPercentage,
@@ -93,154 +93,13 @@ export const createSale = asyncHandler(async (req, res) => {
   }
 });
 
+// Fetch all sales
 export const getSales = asyncHandler(async (req, res) => {
   try {
-    const sales = await Sale.find().populate("medicines");
-
+    const sales = await Sale.find();
     return res.status(200).json({ success: true, sales });
   } catch (error) {
     console.error("Error fetching sales:", error);
     return res.status(500).json({ success: false, message: error.message });
   }
 });
-
-// ✅ Fetch sales by buyer's name or GST number
-export const getPurchasesByBuyer = async (req, res) => {
-  try {
-    const { buyersName, gstNumber } = req.query;
-
-    if (!buyersName && !gstNumber) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide either Buyer's Name or GST Number.",
-      });
-    }
-
-    const query = {};
-    if (buyersName) {
-      query.buyersName = { $regex: new RegExp("^" + buyersName + "$", "i") }; // Case-insensitive match
-    }
-    if (gstNumber) query.gstNumber = gstNumber;
-
-    const sales = await Sale.find(query).populate("medicines");
-
-    if (!sales.length) {
-      return res
-        .status(404)
-        .json({ success: false, message: "No purchase records found." });
-    }
-
-    return res.status(200).json({ success: true, purchases: sales });
-  } catch (error) {
-    console.error("Error fetching sales:", error);
-    return res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// Get personal purchase details
-export const getPurchaseById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        message: "Sale ID is required.",
-      });
-    }
-    console.log("Received Sale ID:", id);
-
-    const sale = await Sale.findById(id).populate("medicines"); // Fetch sale by ID
-
-    if (!sale) {
-      return res.status(404).json({
-        success: false,
-        message: "No purchase record found.",
-      });
-    }
-
-    return res.status(200).json({ success: true, purchases: sale });
-  } catch (error) {
-    console.log(error.message);
-    return res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-// Update purchase: Add more medicines to an existing sale
-export const updateUserPurchase = async (req, res) => {
-  try {
-    const { buyersName, gstNumber, newMedicines } = req.body;
-
-    if (!buyersName && !gstNumber) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide either buyersName or gstNumber.",
-      });
-    }
-
-    if (
-      !newMedicines ||
-      !Array.isArray(newMedicines) ||
-      newMedicines.length === 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide valid medicine details.",
-      });
-    }
-
-    // Find the sale by userName or gstNumber
-    const query = {};
-    if (buyersName) query.buyersName = buyersName;
-    if (gstNumber) query.gstNumber = gstNumber;
-
-    let sale = await Sale.findOne(query).sort({ createdAt: -1 });
-    if (!sale) {
-      return res
-        .status(404)
-        .json({ success: false, message: "No purchase record found." });
-    }
-
-    // Ensure `medicineType` and `brand` are set
-    for (let i = 0; i < newMedicines.length; i++) {
-      const medicine = newMedicines[i];
-
-      if (!medicine.medicineType || !medicine.brand) {
-        const medicineData = await Medicine.findOne({ name: medicine.name });
-
-        if (!medicineData) {
-          return res.status(400).json({
-            success: false,
-            message: `Medicine '${medicine.name}' not found in database.`,
-          });
-        }
-
-        newMedicines[i].medicineType = medicineData.type;
-        newMedicines[i].brand = medicineData.brand;
-      }
-    }
-
-    // Add new medicines to the existing list
-    sale.medicines.push(...newMedicines);
-
-    // Recalculate totals
-    const subTotal = sale.medicines.reduce(
-      (acc, item) => acc + item.sellingPrice * item.quantity,
-      0
-    );
-    const gstAmount = (subTotal * sale.gstPercentage) / 100;
-    const grandTotal = subTotal + gstAmount;
-
-    sale.subTotal = subTotal;
-    sale.gstTotal = gstAmount;
-    sale.grandTotal = grandTotal;
-
-    await sale.save();
-
-    return res
-      .status(200)
-      .json({ success: true, message: "Medicines added successfully", sale });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
