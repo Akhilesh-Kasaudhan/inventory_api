@@ -17,10 +17,10 @@ const salesSchema = new mongoose.Schema(
       required: true,
     },
     buyersAdd: {
-      pincode: { type: String, required: true },
+      localAdd: { type: String, required: true },
       city: { type: String, required: true },
       state: { type: String, required: true },
-      localAdd: { type: String, required: true },
+      pincode: { type: String, required: true },
     },
     email: {
       type: String,

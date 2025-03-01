@@ -107,12 +107,10 @@ export const getPurchasesByBuyer = asyncHandler(async (req, res) => {
   try {
     const { buyersName, gstNumber } = req.query;
     if (!buyersName && !gstNumber)
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Provide Buyer's Name or GST Number.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Provide Buyer's Name or GST Number.",
+      });
     const query = {};
     if (buyersName) query.buyersName = new RegExp(`^${buyersName}$`, "i");
     if (gstNumber) query.gstNumber = gstNumber;
@@ -142,51 +140,65 @@ export const getPurchaseById = asyncHandler(async (req, res) => {
 
 export const updateUserPurchase = asyncHandler(async (req, res) => {
   try {
-    const { buyersName, gstNumber, newMedicines } = req.body;
-    if (!buyersName && !gstNumber)
-      return res
-        .status(400)
-        .json({ success: false, message: "Provide buyersName or gstNumber." });
-    if (!newMedicines?.length)
-      return res
-        .status(400)
-        .json({ success: false, message: "Provide valid medicine details." });
+    const { saleId, newMedicines } = req.body;
 
-    const query = {};
-    if (buyersName) query.buyersName = buyersName;
-    if (gstNumber) query.gstNumber = gstNumber;
-    let sale = await Sale.findOne(query).sort({ createdAt: -1 });
-    if (!sale)
-      return res
-        .status(404)
-        .json({ success: false, message: "No purchase record found." });
+    if (!saleId) {
+      return res.status(400).json({
+        success: false,
+        message: "Sale ID is required.",
+      });
+    }
 
+    if (!newMedicines?.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Provide valid medicine details.",
+      });
+    }
+
+    let sale = await Sale.findById(saleId);
+    if (!sale) {
+      return res.status(404).json({
+        success: false,
+        message: "No purchase record found.",
+      });
+    }
+
+    // Validate new medicines
     for (let medicine of newMedicines) {
       const medicineData = await Medicine.findOne({ name: medicine.name });
-      if (!medicineData)
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message: `Medicine '${medicine.name}' not found.`,
-          });
+      if (!medicineData) {
+        return res.status(400).json({
+          success: false,
+          message: `Medicine '${medicine.name}' not found.`,
+        });
+      }
       medicine.medicineType = medicineData.type;
       medicine.brand = medicineData.brand;
     }
 
-    sale.medicines.push(...newMedicines);
-    sale.subTotal = sale.medicines.reduce(
+    // Replace existing medicines with new medicines
+    sale.medicines = newMedicines;
+
+    // Recalculate totals
+    sale.subTotal = newMedicines.reduce(
       (acc, item) => acc + item.sellingPrice * item.quantity,
       0
     );
     sale.gstTotal = (sale.subTotal * sale.gstPercentage) / 100;
     sale.grandTotal = sale.subTotal + sale.gstTotal;
+
     await sale.save();
 
-    res
-      .status(200)
-      .json({ success: true, message: "Medicines added successfully", sale });
+    res.status(200).json({
+      success: true,
+      message: "Sale updated successfully.",
+      sale,
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 });
