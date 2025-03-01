@@ -174,25 +174,30 @@ export const updateUserPurchase = asyncHandler(async (req, res) => {
     let medicineIds = [];
     let newSubTotal = 0;
 
-    for (let medicineId of newMedicines) {
-      if (!mongoose.Types.ObjectId.isValid(medicineId)) {
+    for (let medicine of newMedicines) {
+      // Validate medicineId
+      if (!mongoose.Types.ObjectId.isValid(medicine.medicineId)) {
         return res.status(400).json({
           success: false,
-          message: `Invalid medicine ID: ${medicineId}`,
+          message: `Invalid medicine ID: ${medicine.medicineId}`,
         });
       }
 
-      const medicineData = await Medicine.findById(medicineId);
+      // Fetch medicine details from the database
+      const medicineData = await Medicine.findById(medicine.medicineId);
 
       if (!medicineData) {
         return res.status(400).json({
           success: false,
-          message: `Medicine with ID '${medicineId}' not found.`,
+          message: `Medicine with ID '${medicine.medicineId}' not found.`,
         });
       }
 
-      medicineIds.push(medicineData._id);
-      newSubTotal += medicineData.price * (medicineData.quantity || 1);
+      // Add validated medicine ID to the array
+      medicineIds.push(new mongoose.Types.ObjectId(medicine.medicineId));
+
+      // Calculate subtotal
+      newSubTotal += medicineData.price * (medicine.quantity || 1);
     }
 
     // Validate new medicines
