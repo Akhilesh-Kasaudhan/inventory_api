@@ -26,16 +26,7 @@ const salesSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    medicines: [
-      {
-        name: { type: String, required: true },
-        brand: { type: String, required: true },
-        medicineType: { type: String, required: true },
-        quantity: { type: Number, required: true },
-        expiryDate: { type: String, required: true },
-        sellingPrice: { type: Number, required: true },
-      },
-    ],
+    medicines: [{ type: mongoose.Schema.Types.ObjectId, ref: "Medicine" }],
     subTotal: {
       type: Number,
       required: true,

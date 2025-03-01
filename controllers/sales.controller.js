@@ -55,11 +55,7 @@ export const createSale = asyncHandler(async (req, res) => {
           });
         }
 
-        medicines[i] = {
-          ...medicine,
-          ...medicineData.toObject(),
-          expiryDate: medicine.expiryDate || medicineData.expiryDate,
-        };
+        medicines[i] = medicineData._id;
       }
     }
 
@@ -97,7 +93,9 @@ export const createSale = asyncHandler(async (req, res) => {
 export const getSales = asyncHandler(async (req, res) => {
   try {
     const sales = await Sale.find();
-    return res.status(200).json({ success: true, sales });
+    return res
+      .status(200)
+      .json({ success: true, Sales: sales, medicine: sales.medicines });
   } catch (error) {
     console.error("Error fetching sales:", error);
     return res.status(500).json({ success: false, message: error.message });
@@ -129,10 +127,14 @@ export const getPurchaseById = asyncHandler(async (req, res) => {
   try {
     const sale = await Sale.findById(req.params.id).populate("medicines");
     if (!sale)
-      return res
-        .status(404)
-        .json({ success: false, message: "No purchase record found." });
-    res.status(200).json({ success: true, purchases: sale });
+      return res.status(404).json({
+        success: false,
+        message: "No purchase record found.",
+      });
+
+    res
+      .status(200)
+      .json({ success: true, purchases: sale, medicine: sale.medicines });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
