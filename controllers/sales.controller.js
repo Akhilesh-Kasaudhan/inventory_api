@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import Sale from "../models/sales.model.js";
 import Medicine from "../models/medicine.model.js";
+import mongoose from "mongoose";
 
 export const createSale = asyncHandler(async (req, res) => {
   try {
