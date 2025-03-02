@@ -3,6 +3,7 @@ import Medicine from "../models/medicine.model.js";
 import Master from "../models/masterMedicine.model.js";
 import mongoose from "mongoose";
 import Brand from "../models/masterBrand.modal.js";
+import Vendor from "../models/vendor.model.js";
 
 export const addMedicineType = asyncHandler(async (req, res) => {
   const { type } = req.body;
@@ -77,7 +78,8 @@ export const deleteMedicineType = asyncHandler(async (req, res) => {
 
 export const addMedicine = asyncHandler(async (req, res) => {
   try {
-    const { name, brand, type, quantity, expiryDate, price, mrp } = req.body;
+    const { name, brand, type, quantity, expiryDate, price, mrp, vendor } =
+      req.body;
     if (price > mrp) {
       return res
         .status(400)
@@ -92,12 +94,18 @@ export const addMedicine = asyncHandler(async (req, res) => {
       return res.status(404).json({ mesage: "Type not found" });
     }
 
+    const vendorExist = await Vendor.findById(vendor);
+    if (!vendorExist) {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+
     // Ensure expiryDate is stored as Month and Year
     const formattedExpiryDate = expiryDate.slice(0, 7); // Extract YYYY-MM format
     const medicine = new Medicine({
       name,
       brand: brandExist._id,
       type: typeExist._id,
+      vendor: vendorExist._id,
       quantity,
       expiryDate: formattedExpiryDate,
       price,
@@ -133,11 +141,21 @@ export const getMedicines = asyncHandler(async (req, res) => {
       },
       { $unwind: "$typeDetails" },
       {
+        $lookup: {
+          from: "vendors",
+          localField: "vendor",
+          foreignField: "_id",
+          as: "vendorDetails",
+        },
+      },
+      { $unwind: "$vendorDetails" },
+      {
         $project: {
           _id: 1,
           name: 1,
           brand: "$brandDetails.brandName",
           type: "$typeDetails.medicineType",
+          vendor: "$vendorDetails.name",
           quantity: 1,
           expiryDate: 1,
           price: 1,
@@ -158,7 +176,8 @@ export const getMedicines = asyncHandler(async (req, res) => {
 export const updateMedicine = asyncHandler(async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, brand, type, quantity, expiryDate, price, mrp } = req.body;
+    const { name, brand, type, quantity, expiryDate, price, mrp, vendor } =
+      req.body;
 
     // Find the existing medicine
     const medicine = await Medicine.findById(id);
@@ -186,10 +205,20 @@ export const updateMedicine = asyncHandler(async (req, res) => {
       typeId = typeExist._id;
     }
 
+    let vendorId = medicine.vendor;
+    if (vendor) {
+      const vendorExist = await Vendor.findById(vendor);
+      if (!vendorExist) {
+        return res.status(404).json({ message: "Vendor not found" });
+      }
+      vendorId = vendorExist._id;
+    }
+
     // Update medicine details
     medicine.name = name || medicine.name;
     medicine.brand = brandId;
     medicine.type = typeId;
+    medicine.vendor = vendorId;
     medicine.quantity = quantity || medicine.quantity;
     medicine.expiryDate = expiryDate || medicine.expiryDate;
     medicine.price = price || medicine.price;

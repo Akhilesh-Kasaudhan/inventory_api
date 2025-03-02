@@ -32,6 +32,11 @@ const medicineSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    vendor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Vendor", // Reference to Vendor model
+      required: true,
+    },
   },
   { timestamps: true }
 );
