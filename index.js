@@ -4,6 +4,7 @@ import authRoute from "./routes/auth.route.js";
 import medicineRoutes from "./routes/medicine.route.js";
 import brandRoutes from "./routes/brand.route.js";
 import saleRoutes from "./routes/sales.route.js";
+import vendorRoutes from "./routes/vendor.route.js";
 import { connectDB } from "./lib/connection.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -71,6 +72,7 @@ app.use("/api/auth", authRoute);
 app.use("/api/medicines", medicineRoutes);
 app.use("/api/brands", brandRoutes);
 app.use("/api", saleRoutes);
+app.use("/api", vendorRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
