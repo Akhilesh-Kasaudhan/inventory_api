@@ -96,7 +96,6 @@ export const getSales = asyncHandler(async (req, res) => {
     );
     return res.status(200).json({ success: true, sales });
   } catch (error) {
-    console.error("Error fetching sales:", error);
     return res.status(500).json({ success: false, message: error.message });
   }
 });

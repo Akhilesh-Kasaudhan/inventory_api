@@ -29,7 +29,6 @@ export const signup = asyncHandler(async (req, res) => {
     });
     if (user) {
       const token = generateToken(user._id, res);
-      console.log(token);
       const savedUser = await user.save();
       const { _id, username } = savedUser;
       return res.status(201).json({
@@ -41,7 +40,6 @@ export const signup = asyncHandler(async (req, res) => {
       return res.status(400).json({ message: "Failed to create user" });
     }
   } catch (error) {
-    console.error("Signup Error:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 });
@@ -71,7 +69,6 @@ export const login = asyncHandler(async (req, res) => {
       return res.status(400).json({ message: "Failed to login user" });
     }
   } catch (error) {
-    console.error("Login Error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -113,7 +110,6 @@ export const changePassword = asyncHandler(async (req, res) => {
       message: "Password changed successfully. Please log in again.",
     });
   } catch (error) {
-    console.error("Change Password Error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 });

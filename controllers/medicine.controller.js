@@ -16,7 +16,6 @@ export const addMedicineType = asyncHandler(async (req, res) => {
       .status(201)
       .json({ message: "MedicineType added successfully", newType });
   } catch (error) {
-    console.log("Error adding MedicineType:", error.message);
     res.status(500).json({ message: "Failed to add MedicineType" });
   }
 });
@@ -26,7 +25,6 @@ export const getAllMedicineType = asyncHandler(async (req, res) => {
     const medicineTypes = await Master.find().sort({ createdAt: -1 });
     return res.status(200).json({ medicineType: { medicineTypes } });
   } catch (error) {
-    console.log("Error getting all MedicineType:", error.message);
     return res.status(500).json({ message: "Failed to get all MedicineType" });
   }
 });
@@ -50,7 +48,6 @@ export const updateMedicineType = asyncHandler(async (req, res) => {
       return res.status(404).json({ message: "No medicine type found" });
     }
   } catch (error) {
-    console.log("Error updating medicine type:", error.message);
     res.status(500).json({ message: "Failed to update medicine type" });
   }
 });
@@ -71,7 +68,6 @@ export const deleteMedicineType = asyncHandler(async (req, res) => {
       return res.status(404).json({ message: "No medicine type found" });
     }
   } catch (error) {
-    console.log("Error deleting medicine type:", error.message);
     res.status(500).json({ message: "Failed to delete medicine type" });
   }
 });
@@ -114,7 +110,6 @@ export const addMedicine = asyncHandler(async (req, res) => {
     await medicine.save();
     return res.status(201).json(medicine);
   } catch (error) {
-    console.log("Error adding product:", error.message);
     res.status(400).json({ message: error.message });
   }
 });
@@ -168,7 +163,6 @@ export const getMedicines = asyncHandler(async (req, res) => {
       .status(200)
       .json({ message: "Medicine fetched successfully:", medicines });
   } catch (error) {
-    console.log("Error fetching medicines:", error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -232,7 +226,6 @@ export const updateMedicine = asyncHandler(async (req, res) => {
       medicine: updatedMedicine,
     });
   } catch (error) {
-    console.log("Error updating medicine:", error.message);
     res.status(500).json({ error: error.message });
   }
 });

@@ -13,7 +13,6 @@ export const addBrandName = asyncHandler(async (req, res) => {
       .status(201)
       .json({ message: "BrandName added successfully", newBrand });
   } catch (error) {
-    console.log("Error adding brandName:", error.message);
     res.status(500).json({ message: "Failed to add brandName" });
   }
 });
@@ -23,7 +22,6 @@ export const getBrandName = asyncHandler(async (req, res) => {
     const brandName = await Brand.find().sort({ createdAt: -1 });
     return res.status(200).json({ brandName: brandName });
   } catch (error) {
-    console.log("Error getting all brandName:", error.message);
     return res.status(500).json({ message: "Failed to get all brandName" });
   }
 });
@@ -44,7 +42,6 @@ export const updateBrandName = asyncHandler(async (req, res) => {
       return res.status(404).json({ message: "No brand name found" });
     }
   } catch (error) {
-    console.log("Error updating medicine type:", error.message);
     res.status(500).json({ message: "Failed to update medicine type" });
   }
 });
@@ -65,7 +62,6 @@ export const deleteBrandName = asyncHandler(async (req, res) => {
       return res.status(404).json({ message: "No brand name found" });
     }
   } catch (error) {
-    console.log("Error deleting brand name:", error.message);
     res.status(500).json({ message: "Failed to delete brand name" });
   }
 });
